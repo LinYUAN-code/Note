@@ -1,6 +1,7 @@
 package main
 
 import (
+
 	"log"
 	"runtime"
 	"unsafe"
@@ -8,6 +9,7 @@ import (
 	"github.com/go-gl/gl/v3.3-core/gl"
 	"github.com/go-gl/glfw/v3.3/glfw"
 	"linyuan.com/go-gl/event"
+	"linyuan.com/go-gl/utils"
 )
 
 func init() {
@@ -67,6 +69,8 @@ func main() {
 		如果数据经常改变那么会被放在GPU的高速显存中
 	*/
 	gl.BufferData(gl.ARRAY_BUFFER,len(vertices),unsafe.Pointer(&vertices[0]),gl.STATIC_DRAW)
+
+	utils.InitShader("./shader/vertexShader.glsl","./shader/fragmentShader.glsl")
 	// 设置背景色
 	for !window.ShouldClose() {
 		// 处理事件
