@@ -1,10 +1,9 @@
 package main
 
 import (
-
 	"log"
+	"math"
 	"runtime"
-	"unsafe"
 
 	"github.com/go-gl/gl/v3.3-core/gl"
 	"github.com/go-gl/glfw/v3.3/glfw"
@@ -53,36 +52,53 @@ func main() {
 	// 设置视口变化
 	gl.Viewport(0,0,int32(width),int32(height))
 
-	var VBO uint32
-	gl.GenBuffers(1,&VBO)
-	gl.BindBuffer(gl.ARRAY_BUFFER,VBO)
+	var VAO uint32
+	gl.GenVertexArrays(1,&VAO)
+	gl.BindVertexArray(VAO)
+
 	vertices := []float32{
 		-0.5, -0.5, 0.0,
 		0.5, -0.5, 0.0,
 		0.0,  0.5, 0.0,
 	}
-	/*
-		GL_STATIC_DRAW ：数据不会或几乎不会改变。
-		GL_DYNAMIC_DRAW：数据会被改变很多。
-		GL_STREAM_DRAW ：数据每次绘制时都会改变。
+	VBO := utils.GetVBOFloat32(vertices)
 
-		如果数据经常改变那么会被放在GPU的高速显存中
-	*/
-	gl.BufferData(gl.ARRAY_BUFFER,len(vertices),unsafe.Pointer(&vertices[0]),gl.STATIC_DRAW)
+	// 绑定顶点属性 layout(location = 0)
+	gl.VertexAttribPointer(0,3,gl.FLOAT,false,3 * 4, nil)
+	gl.EnableVertexAttribArray(0)
 
-	utils.InitShader("./shader/vertexShader.glsl","./shader/fragmentShader.glsl")
+	// 取消绑定
+	gl.BindBuffer(gl.ARRAY_BUFFER,0)
+	gl.BindVertexArray(0)
+
+	program := utils.InitShader("./shader/vertexShader.glsl","./shader/fragmentShader.glsl")
+
 	// 设置背景色
 	for !window.ShouldClose() {
 		// 处理事件
 		glfw.PollEvents()
-		// Do OpenGL stuff.
+		
 		// 设置一个颜色
 		gl.ClearColor(0.2,0.3,0.3,1.0)
 		// 使用设置的颜色来清空屏幕
 		gl.Clear(gl.COLOR_BUFFER_BIT)
+		gl.UseProgram(program)
+
+		println(glfw.GetTime())
+
+		blue := math.Sin(glfw.GetTime()) / 2.0 + 0.5;
+		utils.InjectUniform4F(program,"time_color",1.0,1.0,float32(blue),1.0)
+
+		gl.BindVertexArray(VAO)
+		// Do OpenGL stuff.
+		gl.DrawArrays(gl.TRIANGLES,0,3)
+
 		// 交换缓冲区-双缓存机制
 		window.SwapBuffers()
 	}
+
+	gl.DeleteVertexArrays(1, &VAO)
+	gl.DeleteBuffers(1, &VBO)
 	// 程序结束 释放资源
 	glfw.Terminate()
 }
